@@ -13,5 +13,7 @@ namespace MPP_BackEnd
         public string Color { get; set; }
         public int Memory { get; set; }
         public string Photo { get; set; }
+
+        public int Store { get; set; }
     }
 }

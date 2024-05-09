@@ -29,7 +29,7 @@ namespace MPP_BackEnd.Controllers
         [HttpGet("{id}")]
         public IActionResult GetPhoneById(int id)
         {
-            var phoneModel = this._repositoryPhone.GetAllPhones().FirstOrDefault(p => p.Id == id);
+            var phoneModel = this._repositoryPhone.GetPhone(id);
             if (phoneModel == null)
             {
                 return NotFound(); // Return 404 Not Found if phone with given id is not found
@@ -67,6 +67,26 @@ namespace MPP_BackEnd.Controllers
             {
                 return NotFound();
             }
+        }
+
+        [HttpGet("store/{storeid}")]
+        public IActionResult GetAllPhonesById(int storeid)
+        {
+            var phones = this._repositoryPhone.GetPhonesByStore(storeid);
+            //if (phones.Count == 0)
+            //{
+            //    return NotFound();
+            //}
+            return Ok(phones);
+        }
+
+        [HttpGet("{pageSize}/{page}")]
+        public IActionResult GetPhoneModels(int page = 1, int pageSize = 5)
+        {
+            var phoneModels = this._repositoryPhone.GetPagedPhones(page, pageSize);
+            var totalPages = this._repositoryPhone.getPhonesCount() / pageSize;
+            Console.WriteLine(totalPages);
+            return Ok(new { Data = phoneModels, TotalPages = totalPages});
         }
     }
 }

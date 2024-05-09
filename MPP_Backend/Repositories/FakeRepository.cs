@@ -72,5 +72,20 @@
                 return false;
             }
         }
+
+        public IEnumerable<PhoneModel> GetPagedPhones(int page = 1, int pageSize = 5)
+        {
+            throw new NotImplementedException();
+        }
+
+        public int getPhonesCount()
+        {
+            throw new NotImplementedException();
+        }
+
+        public IEnumerable<PhoneModel> GetPhonesByStore(int storeid)
+        {
+            throw new NotImplementedException();
+        }
     }
 }
