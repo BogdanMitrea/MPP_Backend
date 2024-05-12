@@ -3,7 +3,6 @@ using System.Net;
 using System.Text;
 using Microsoft.Data.SqlClient;
 using System.Data;
-using static Microsoft.ApplicationInsights.MetricDimensionNames.TelemetryContext;
 
 namespace MPP_BackEnd.Repositories
 {
