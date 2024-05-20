@@ -1,7 +1,32 @@
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.DataProtection.KeyManagement;
+using Microsoft.IdentityModel.Tokens;
 using MPP_Backend.Repositories;
 using MPP_BackEnd.Repositories;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
+var key = Encoding.ASCII.GetBytes("lamznxbcvqwertyuiop123poiuytrewqghfjdks");
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+        .AddJwtBearer(options =>
+        {
+            options.TokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidateLifetime = true,
+                ValidateIssuerSigningKey = true,
+                ValidIssuer = "your_issuer",
+                ValidAudience = "your_audience",
+                IssuerSigningKey = new SymmetricSecurityKey(key)
+            };
+        });
+
 
 // Add services to the container.
 builder.Services.AddTransient<IRepositoryPhone, RepositoryPhone>();
@@ -19,6 +44,7 @@ builder.Services.AddCors(options => options.AddPolicy(name: "AllowAngularPhones"
 
 var app = builder.Build();
 
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
@@ -30,6 +56,7 @@ app.UseCors("AllowAngularPhones");
 
 app.UseHttpsRedirection();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

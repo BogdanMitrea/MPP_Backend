@@ -6,12 +6,11 @@ namespace MPP_Backend.Repositories
     public class AuthRepository
     {
         private readonly string _connectionString;
-        private Dictionary<string, string> _tokenStorage;
+        private static Dictionary<string, string> _tokenStorage=[];
 
         public AuthRepository()
         {
             _connectionString = "Server=DESKTOP-DASUQ97\\SQLEXPRESS;Database=PhonesStore;Trusted_Connection=True;TrustServerCertificate=True";
-            _tokenStorage = new Dictionary<string, string>();
         }
 
         public bool Login(string username, string psswd)

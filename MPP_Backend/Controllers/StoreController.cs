@@ -2,6 +2,7 @@
 using MPP_BackEnd.Repositories;
 using MPP_BackEnd;
 using MPP_Backend.Repositories;
+using Microsoft.AspNetCore.Authorization;
 
 namespace MPP_Backend.Controllers
 {
@@ -33,6 +34,7 @@ namespace MPP_Backend.Controllers
             return Ok(storeModel);
         }
 
+        [Authorize]
         [HttpPost]
         public IActionResult AddNewStore([FromBody] Store store)
         {
@@ -40,6 +42,7 @@ namespace MPP_Backend.Controllers
             return Ok(store); // Returns the added store object as JSON
         }
 
+        [Authorize]
         [HttpDelete("{id}")]
         public IActionResult DeleteStore(int id)
         {
@@ -52,6 +55,8 @@ namespace MPP_Backend.Controllers
                 return NotFound();
             }
         }
+
+        [Authorize]
         [HttpPut("{id}")]
         public IActionResult Updatestore(int id, [FromBody] Store newmodel)
         {

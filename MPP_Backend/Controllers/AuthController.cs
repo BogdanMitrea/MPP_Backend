@@ -48,23 +48,25 @@ namespace MPP_Backend.Controllers
         private string GenerateJwtToken(string username,string email)
         {
             var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("poiuytrewqghfjdkslamznxbcvqwertyuiop"));
-            var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
+            var key = Encoding.ASCII.GetBytes("lamznxbcvqwertyuiop123poiuytrewqghfjdks");
 
             var claims = new[]
             {
                 new Claim(JwtRegisteredClaimNames.Sub, username),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-                new Claim("email", email)
             };
 
             var token = new JwtSecurityToken(
+                issuer: "your_issuer",
+                audience: "your_audience",
                 claims: claims,
                 expires: DateTime.UtcNow.AddHours(1),
-                signingCredentials: credentials
+                signingCredentials: new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
             );
 
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
+
     }
 
     public class LoginModel

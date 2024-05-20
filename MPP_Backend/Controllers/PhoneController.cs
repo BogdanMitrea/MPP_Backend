@@ -6,9 +6,12 @@ using System;
 using System.Net;
 using System.Numerics;
 using System.Xml.Linq;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 
 namespace MPP_BackEnd.Controllers
 {
+    
     [Route("api/[controller]")]
     [ApiController]
     public class PhoneController : ControllerBase
@@ -19,7 +22,6 @@ namespace MPP_BackEnd.Controllers
             this._repositoryPhone = repositoryPhone;
 
         }
-
         [HttpGet]
         public IEnumerable<PhoneModel> GetAllPhones()
         {
@@ -37,6 +39,7 @@ namespace MPP_BackEnd.Controllers
             return Ok(phoneModel);
         }
 
+        [Authorize]
         [HttpPost]
         public IActionResult AddNewPhone([FromBody] PhoneModel phone)
         {
@@ -44,6 +47,7 @@ namespace MPP_BackEnd.Controllers
             return Ok(phone); // Returns the added phone object as JSON
         }
 
+        [Authorize]
         [HttpDelete("{id}")]
         public IActionResult DeletePhone(int id)
         {
@@ -56,6 +60,8 @@ namespace MPP_BackEnd.Controllers
                 return NotFound();
             }
         }
+
+        [Authorize]
         [HttpPut("{id}")]
         public IActionResult UpdatePhone(int id, [FromBody] PhoneModel newmodel)
         {
@@ -80,12 +86,13 @@ namespace MPP_BackEnd.Controllers
             return Ok(phones);
         }
 
+        
         [HttpGet("{pageSize}/{page}")]
         public IActionResult GetPhoneModels(int page = 1, int pageSize = 5)
         {
+            var userIdentity = HttpContext.User.Identity;
             var phoneModels = this._repositoryPhone.GetPagedPhones(page, pageSize);
-            var totalPages = this._repositoryPhone.getPhonesCount() / pageSize;
-            Console.WriteLine(totalPages);
+            var totalPages = this._repositoryPhone.getPhonesCount() % pageSize==0 ? this._repositoryPhone.getPhonesCount() / pageSize : this._repositoryPhone.getPhonesCount() / pageSize+1;
             return Ok(new { Data = phoneModels, TotalPages = totalPages});
         }
     }

@@ -17,7 +17,7 @@ namespace MPP_BackEnd.Repositories
         {
             _connectionString = "Server=DESKTOP-DASUQ97\\SQLEXPRESS;Database=PhonesStore;Trusted_Connection=True;TrustServerCertificate=True";
             //Console.WriteLine(_connectionString);
-            //GenerateRandomPhones(20000000);
+            //GenerateRandomPhones(40000000);
             StartWebSocketServerAsync();
             lock (threadLock)
             {
