@@ -1,7 +1,7 @@
 ﻿using System.Net.WebSockets;
 using System.Net;
 using System.Text;
-using Microsoft.Data.SqlClient;
+using MySql.Data.MySqlClient;
 using System.Data;
 
 namespace MPP_BackEnd.Repositories
@@ -15,7 +15,7 @@ namespace MPP_BackEnd.Repositories
 
         public RepositoryPhone()
         {
-            _connectionString = "Server=DESKTOP-DASUQ97\\SQLEXPRESS;Database=PhonesStore;Trusted_Connection=True;TrustServerCertificate=True";
+            _connectionString = "server=viaduct.proxy.rlwy.net;port=34412;user=root;password=MpzwBuPsIHfhiudKFBpxeYrApLypiKMY;database=railway";
             //Console.WriteLine(_connectionString);
             //GenerateRandomPhones(40000000);
             StartWebSocketServerAsync();
@@ -33,41 +33,36 @@ namespace MPP_BackEnd.Repositories
             }
         }
 
-        public int get_maxID()
+        public int GetMaxId()
         {
-            //int maxid = 0;
-            //foreach(var a in phones)
-            //{
-            //    if(a.Id>maxid)
-            //    {
-            //        maxid = a.Id;
-            //    }
-            //}
-            //return maxid+1;
-            using SqlConnection connection = new(_connectionString);
+            using MySqlConnection connection = new MySqlConnection(_connectionString);
             connection.Open();
 
-            SqlCommand command = connection.CreateCommand();
+            MySqlCommand command = connection.CreateCommand();
             command.CommandType = CommandType.Text;
-            command.CommandText = "Select max(Phone.id) from Phone";
-            int maxid = Convert.ToInt32(command.ExecuteScalar());
+            command.CommandText = "SELECT MAX(id) FROM Phone";
+
+            object result = command.ExecuteScalar();
+            int maxId = (result == DBNull.Value) ? 0 : Convert.ToInt32(result);
+
             connection.Close();
-            return maxid + 1;
+
+            return maxId + 1;
         }
 
         public int AddPhone(PhoneModel phoneModel)
         {
-            //int newid = get_maxID();
-            //phoneModel.Id = newid;
-            //phones.Add(phoneModel);
-            //return phoneModel.Id;
-            using SqlConnection connection = new(_connectionString);
+            int newId = GetMaxId();
+
+            using MySqlConnection connection = new MySqlConnection(_connectionString);
             connection.Open();
 
-            SqlCommand command = connection.CreateCommand();
+            MySqlCommand command = connection.CreateCommand();
             command.CommandType = CommandType.Text;
-            command.CommandText = "INSERT INTO Phone (phoneName, producer,color,yearOfRelease,phoneMemory,photo,store) VALUES (@phoneName, @producer,@color,@yearOfRelease,@phoneMemory,@photo,@store); SELECT SCOPE_IDENTITY()";
+            command.CommandText = "INSERT INTO Phone (id, phoneName, producer, color, yearOfRelease, phoneMemory, photo, store) " +
+                                  "VALUES (@id, @phoneName, @producer, @color, @yearOfRelease, @phoneMemory, @photo, @store)";
 
+            command.Parameters.AddWithValue("@id", newId);
             command.Parameters.AddWithValue("@phoneName", phoneModel.Name);
             command.Parameters.AddWithValue("@producer", phoneModel.Producer);
             command.Parameters.AddWithValue("@color", phoneModel.Color);
@@ -76,27 +71,19 @@ namespace MPP_BackEnd.Repositories
             command.Parameters.AddWithValue("@photo", phoneModel.Photo);
             command.Parameters.AddWithValue("@store", phoneModel.Store);
 
-            int newPhoneId = Convert.ToInt32(command.ExecuteScalar());
+            command.ExecuteNonQuery();
+
             connection.Close();
-            return newPhoneId;
+
+            return newId;
         }
 
         public bool DeletePhone(int id)
         {
-            //int indexToRemove = phones.FindIndex(phone => phone.Id == id);
-            //if (indexToRemove != -1)
-            //{
-            //    phones.RemoveAt(indexToRemove);
-            //    return true;
-            //}
-            //else
-            //{
-            //    return false;
-            //}
-            using SqlConnection connection = new SqlConnection(_connectionString);
+            using MySqlConnection connection = new MySqlConnection(_connectionString);
             connection.Open();
 
-            SqlCommand command = connection.CreateCommand();
+            MySqlCommand command = connection.CreateCommand();
             command.CommandType = CommandType.Text;
             command.CommandText = "DELETE FROM Phone WHERE id = @id";
 
@@ -111,32 +98,31 @@ namespace MPP_BackEnd.Repositories
         {
             List<PhoneModel> phones = new List<PhoneModel>();
 
-            using SqlConnection connection = new(_connectionString);
+            using MySqlConnection connection = new MySqlConnection(_connectionString);
             connection.Open();
 
-            SqlCommand command = connection.CreateCommand();
+            MySqlCommand command = connection.CreateCommand();
             command.CommandType = CommandType.Text;
             command.CommandText = "SELECT * FROM Phone";
 
-            SqlDataReader reader = command.ExecuteReader();
+            using MySqlDataReader reader = command.ExecuteReader();
 
             while (reader.Read())
             {
                 PhoneModel phone = new PhoneModel
                 {
-                    Id = (int)reader["Id"],
-                    Name = (string)reader["phoneName"],
-                    Producer = (string)reader["producer"],
-                    Color = (string)reader["color"],
-                    Year = (int)reader["yearOfRelease"],
-                    Memory = (int)reader["phoneMemory"],
-                    Photo = (string)reader["photo"],
-                    Store = (int)reader["store"]
+                    Id = Convert.ToInt32(reader["Id"]),
+                    Name = reader["phoneName"].ToString(),
+                    Producer = reader["producer"].ToString(),
+                    Color = reader["color"].ToString(),
+                    Year = Convert.ToInt32(reader["yearOfRelease"]),
+                    Memory = Convert.ToInt32(reader["phoneMemory"]),
+                    Photo = reader["photo"].ToString(),
+                    Store = Convert.ToInt32(reader["store"])
                 };
                 phones.Add(phone);
             }
 
-            reader.Close();
             connection.Close();
 
             return phones;
@@ -146,32 +132,33 @@ namespace MPP_BackEnd.Repositories
         {
             List<PhoneModel> phones = new List<PhoneModel>();
 
-            using SqlConnection connection = new(_connectionString);
+            using MySqlConnection connection = new MySqlConnection(_connectionString);
             connection.Open();
 
-            SqlCommand command = connection.CreateCommand();
+            MySqlCommand command = connection.CreateCommand();
             command.CommandType = CommandType.Text;
-            command.CommandText = "SELECT *\r\nFROM Phone\r\norder by id\r\nOFFSET "+(page-1)*pageSize+" ROWS\r\nFETCH NEXT "+pageSize+" ROWS ONLY;";
+            command.CommandText = "SELECT * FROM Phone ORDER BY id LIMIT @pageSize OFFSET @offset";
+            command.Parameters.AddWithValue("@pageSize", pageSize);
+            command.Parameters.AddWithValue("@offset", (page - 1) * pageSize);
 
-            SqlDataReader reader = command.ExecuteReader();
+            using MySqlDataReader reader = command.ExecuteReader();
 
             while (reader.Read())
             {
                 PhoneModel phone = new PhoneModel
                 {
-                    Id = (int)reader["Id"],
-                    Name = (string)reader["phoneName"],
-                    Producer = (string)reader["producer"],
-                    Color = (string)reader["color"],
-                    Year = (int)reader["yearOfRelease"],
-                    Memory = (int)reader["phoneMemory"],
-                    Photo = (string)reader["photo"],
-                    Store = (int)reader["store"]
+                    Id = Convert.ToInt32(reader["Id"]),
+                    Name = reader["phoneName"].ToString(),
+                    Producer = reader["producer"].ToString(),
+                    Color = reader["color"].ToString(),
+                    Year = Convert.ToInt32(reader["yearOfRelease"]),
+                    Memory = Convert.ToInt32(reader["phoneMemory"]),
+                    Photo = reader["photo"].ToString(),
+                    Store = Convert.ToInt32(reader["store"])
                 };
                 phones.Add(phone);
             }
 
-            reader.Close();
             connection.Close();
 
             return phones;
@@ -179,50 +166,51 @@ namespace MPP_BackEnd.Repositories
 
         public int getPhonesCount()
         {
-            using SqlConnection connection = new(_connectionString);
+            using MySqlConnection connection = new MySqlConnection(_connectionString);
             connection.Open();
 
-            SqlCommand command = connection.CreateCommand();
+            MySqlCommand command = connection.CreateCommand();
             command.CommandType = CommandType.Text;
-            command.CommandText = "select count(*) from Phone";
+            command.CommandText = "SELECT COUNT(*) FROM Phone";
 
-            object result = command.ExecuteScalar();
-            int.TryParse(result.ToString(),out int count);
+            int count = Convert.ToInt32(command.ExecuteScalar());
+
+            connection.Close();
+
             return count;
         }
 
+
         public PhoneModel? GetPhone(int id)
         {
-            //return phones.ElementAt(phones.FindIndex(phone => phone.Id == id));
             PhoneModel? phone = null;
 
-            using SqlConnection connection = new(_connectionString);
+            using MySqlConnection connection = new MySqlConnection(_connectionString);
             connection.Open();
 
-            SqlCommand command = connection.CreateCommand();
+            MySqlCommand command = connection.CreateCommand();
             command.CommandType = CommandType.Text;
             command.CommandText = "SELECT * FROM Phone WHERE Id = @id";
 
             command.Parameters.AddWithValue("@id", id);
 
-            SqlDataReader reader = command.ExecuteReader();
+            using MySqlDataReader reader = command.ExecuteReader();
 
             if (reader.Read())
             {
                 phone = new PhoneModel
                 {
-                    Id = (int)reader["Id"],
-                    Name = (string)reader["phoneName"],
-                    Producer = (string)reader["producer"],
-                    Color = (string)reader["color"],
-                    Year = (int)reader["yearOfRelease"],
-                    Memory = (int)reader["phoneMemory"],
-                    Photo = (string)reader["photo"],
-                    Store = (int)reader["store"]
+                    Id = Convert.ToInt32(reader["Id"]),
+                    Name = reader["phoneName"].ToString(),
+                    Producer = reader["producer"].ToString(),
+                    Color = reader["color"].ToString(),
+                    Year = Convert.ToInt32(reader["yearOfRelease"]),
+                    Memory = Convert.ToInt32(reader["phoneMemory"]),
+                    Photo = reader["photo"].ToString(),
+                    Store = Convert.ToInt32(reader["store"])
                 };
             }
 
-            reader.Close();
             connection.Close();
 
             return phone;
@@ -230,27 +218,12 @@ namespace MPP_BackEnd.Repositories
 
         public bool UpdatePhone(int id, PhoneModel phone)
         {
-            //int indexToUpdate = phones.FindIndex(phone => phone.Id == id);
-            //if (indexToUpdate != -1)
-            //{
-            //    phones[indexToUpdate].Name = phone.Name;
-            //    phones[indexToUpdate].Memory = phone.Memory;
-            //    phones[indexToUpdate].Producer = phone.Producer;
-            //    phones[indexToUpdate].Color = phone.Color;
-            //    phones[indexToUpdate].Photo = phone.Photo;
-            //    phones[indexToUpdate].Year = phone.Year;
-            //    return true;
-            //}
-            //else
-            //{
-            //    return false;
-            //}
-            using SqlConnection connection = new(_connectionString);
+            using MySqlConnection connection = new MySqlConnection(_connectionString);
             connection.Open();
 
-            SqlCommand command = connection.CreateCommand();
+            MySqlCommand command = connection.CreateCommand();
             command.CommandType = CommandType.Text;
-            command.CommandText = "UPDATE Phone SET phoneName = @name, producer = @producer, color = @color, yearOfRelease = @year, phoneMemory = @memory, photo = @photo  WHERE Id = @id";
+            command.CommandText = "UPDATE Phone SET phoneName = @name, producer = @producer, color = @color, yearOfRelease = @year, phoneMemory = @memory, photo = @photo WHERE Id = @id";
 
             command.Parameters.AddWithValue("@id", id);
             command.Parameters.AddWithValue("@name", phone.Name);
@@ -265,6 +238,7 @@ namespace MPP_BackEnd.Repositories
 
             return rowsAffected > 0;
         }
+
 
         private WebSocket webSocket;
         public async Task StartWebSocketServerAsync()
@@ -298,7 +272,7 @@ namespace MPP_BackEnd.Repositories
                 Thread.Sleep(TimeSpan.FromMinutes(60));
                 PhoneModel newphone = new PhoneModel
                 {
-                    Id = this.get_maxID(),
+                    Id = this.GetMaxId(),
                     Name = "name",
                     Producer = "producer",
                     Year = 2026,
@@ -359,34 +333,33 @@ namespace MPP_BackEnd.Repositories
         {
             List<PhoneModel> phones = new List<PhoneModel>();
 
-            using SqlConnection connection = new SqlConnection(_connectionString);
+            using MySqlConnection connection = new MySqlConnection(_connectionString);
             connection.Open();
 
-            SqlCommand command = connection.CreateCommand();
+            MySqlCommand command = connection.CreateCommand();
             command.CommandType = CommandType.Text;
-            command.CommandText = "Select * FROM Phone WHERE store = @id";
+            command.CommandText = "SELECT * FROM Phone WHERE store = @id";
 
             command.Parameters.AddWithValue("@id", storeid);
 
-            SqlDataReader reader = command.ExecuteReader();
+            using MySqlDataReader reader = command.ExecuteReader();
 
             while (reader.Read())
             {
                 PhoneModel phone = new PhoneModel
                 {
-                    Id = (int)reader["Id"],
-                    Name = (string)reader["phoneName"],
-                    Producer = (string)reader["producer"],
-                    Color = (string)reader["color"],
-                    Year = (int)reader["yearOfRelease"],
-                    Memory = (int)reader["phoneMemory"],
-                    Photo = (string)reader["photo"],
-                    Store = (int)reader["store"]
+                    Id = Convert.ToInt32(reader["Id"]),
+                    Name = reader["phoneName"].ToString(),
+                    Producer = reader["producer"].ToString(),
+                    Color = reader["color"].ToString(),
+                    Year = Convert.ToInt32(reader["yearOfRelease"]),
+                    Memory = Convert.ToInt32(reader["phoneMemory"]),
+                    Photo = reader["photo"].ToString(),
+                    Store = Convert.ToInt32(reader["store"])
                 };
                 phones.Add(phone);
             }
 
-            reader.Close();
             connection.Close();
 
             return phones;

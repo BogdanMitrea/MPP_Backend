@@ -27,7 +27,7 @@ namespace MPP_BackEnd.Tests
             int addedPhoneId = repository.AddPhone(phoneModel);
 
             // Assert
-            Assert.AreEqual(repository.get_maxID(), addedPhoneId + 1); // Assuming IDs are auto-incremented
+            Assert.AreEqual(repository.GetMaxId(), addedPhoneId + 1); // Assuming IDs are auto-incremented
         }
 
         [TestMethod]
@@ -35,7 +35,7 @@ namespace MPP_BackEnd.Tests
         {
             // Arrange
             var repository = new RepositoryPhone();
-            int idToDelete = repository.get_maxID() - 1; // Assuming phone with ID 2 exists
+            int idToDelete = repository.GetMaxId() - 1; // Assuming phone with ID 2 exists
             
             // Act
             bool isDeleted = repository.DeletePhone(idToDelete);
@@ -94,7 +94,7 @@ namespace MPP_BackEnd.Tests
             int addedPhoneId = repository.AddPhone(phoneModel);
 
             // Arrange
-            int idToGet = repository.get_maxID() - 1;
+            int idToGet = repository.GetMaxId() - 1;
 
             // Act
             PhoneModel phone = repository.GetPhone(idToGet);

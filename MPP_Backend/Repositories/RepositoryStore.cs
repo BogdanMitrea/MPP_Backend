@@ -1,5 +1,5 @@
-﻿
-using Microsoft.Data.SqlClient;
+﻿//using Microsoft.Data.SqlClient;
+using MySql.Data.MySqlClient;
 using MPP_BackEnd;
 using System.Data;
 using System.Threading;
@@ -12,110 +12,115 @@ namespace MPP_Backend.Repositories
 
         public RepositoryStore()
         {
-            _connectionString = "Server=DESKTOP-DASUQ97\\SQLEXPRESS;Database=PhonesStore;Trusted_Connection=True;TrustServerCertificate=True";
+            _connectionString = "server=viaduct.proxy.rlwy.net;port=34412;user=root;password=MpzwBuPsIHfhiudKFBpxeYrApLypiKMY;database=railway";
             //this.GenerateRandomStores(500);
         }
 
         public int AddStore(Store store)
         {
-            using SqlConnection connection = new(_connectionString);
+            using MySqlConnection connection = new MySqlConnection(_connectionString);
             connection.Open();
+            MySqlCommand getMaxIdCommand = connection.CreateCommand();
+            getMaxIdCommand.CommandType = CommandType.Text;
+            getMaxIdCommand.CommandText = "SELECT MAX(Id) FROM Store";
+            int currentMaxId = Convert.ToInt32(getMaxIdCommand.ExecuteScalar());
+            int newId = currentMaxId + 1;
 
-            SqlCommand command = connection.CreateCommand();
-            command.CommandType = CommandType.Text;
-            command.CommandText = "INSERT INTO Store (storename) VALUES (@storeName); SELECT SCOPE_IDENTITY()";
+            MySqlCommand insertCommand = connection.CreateCommand();
+            insertCommand.CommandType = CommandType.Text;
+            insertCommand.CommandText = "INSERT INTO Store (Id, storename) VALUES (@id, @storeName)";
 
-            command.Parameters.AddWithValue("@storeName", store.Name);
+            insertCommand.Parameters.AddWithValue("@id", newId);
+            insertCommand.Parameters.AddWithValue("@storeName", store.Name);
 
-            int newStoreId = Convert.ToInt32(command.ExecuteScalar());
+            int rowsAffected = insertCommand.ExecuteNonQuery();
             connection.Close();
-            return newStoreId;
+
+            return newId;
         }
 
         public bool DeleteStore(int id)
         {
-            using (SqlConnection connection = new(_connectionString))
-            {
-                connection.Open();
+            using MySqlConnection connection = new MySqlConnection(_connectionString);
+            connection.Open();
 
-                SqlCommand command = connection.CreateCommand();
-                command.CommandType = CommandType.Text;
-                command.CommandText = "DELETE FROM Store WHERE Id = @id";
+            MySqlCommand command = connection.CreateCommand();
+            command.CommandType = CommandType.Text;
+            command.CommandText = "DELETE FROM Store WHERE Id = @id";
 
-                command.Parameters.AddWithValue("@id", id);
+            command.Parameters.AddWithValue("@id", id);
 
-                int rowsAffected = command.ExecuteNonQuery();
-                return rowsAffected > 0; // Return true if at least one row was deleted
-            }
+            int rowsAffected = command.ExecuteNonQuery();
+            connection.Close();
+            return rowsAffected > 0; // Return true if at least one row was deleted
         }
 
         public IEnumerable<Store> GetAllStores()
         {
-            using (SqlConnection connection = new(_connectionString))
+            List<Store> stores = new List<Store>();
+
+            using MySqlConnection connection = new MySqlConnection(_connectionString);
+            connection.Open();
+
+            MySqlCommand command = connection.CreateCommand();
+            command.CommandType = CommandType.Text;
+            command.CommandText = "SELECT * FROM Store";
+
+            using MySqlDataReader reader = command.ExecuteReader();
+            while (reader.Read())
             {
-                connection.Open();
-
-                SqlCommand command = connection.CreateCommand();
-                command.CommandType = CommandType.Text;
-                command.CommandText = "SELECT * FROM Store";
-
-                SqlDataReader reader = command.ExecuteReader();
-                while (reader.Read())
-                {
-                    int id = Convert.ToInt32(reader["Id"]);
-                    string name = reader["storename"] as string;
-                    yield return new Store { Id = id, Name = name }; // Assuming a Store class with Id and Name properties
-                }
-
-                reader.Close();
+                int id = Convert.ToInt32(reader["Id"]);
+                string name = reader["storename"] as string;
+                stores.Add(new Store { Id = id, Name = name }); // Assuming a Store class with Id and Name properties
             }
+
+            connection.Close();
+
+            return stores;
         }
 
         public Store? GetStore(int id)
         {
-            using (SqlConnection connection = new(_connectionString))
+            using MySqlConnection connection = new MySqlConnection(_connectionString);
+            connection.Open();
+
+            MySqlCommand command = connection.CreateCommand();
+            command.CommandType = CommandType.Text;
+            command.CommandText = "SELECT * FROM Store WHERE Id = @id";
+
+            command.Parameters.AddWithValue("@id", id);
+
+            using MySqlDataReader reader = command.ExecuteReader();
+
+            if (reader.Read())
             {
-                connection.Open();
-
-                SqlCommand command = connection.CreateCommand();
-                command.CommandType = CommandType.Text;
-                command.CommandText = "SELECT * FROM Store WHERE Id = @id";
-
-                command.Parameters.AddWithValue("@id", id);
-
-                SqlDataReader reader = command.ExecuteReader();
-
-                if (reader.Read())
-                {
-                    int storeId = Convert.ToInt32(reader["Id"]);
-                    string name = reader["storename"] as string;
-                    return new Store { Id = storeId, Name = name };
-                }
-                else
-                {
-                    reader.Close();
-                    return null; // Store not found
-                }
+                int storeId = Convert.ToInt32(reader["Id"]);
+                string name = reader["storename"] as string;
+                return new Store { Id = storeId, Name = name };
+            }
+            else
+            {
+                return null; // Store not found
             }
         }
 
         public bool UpdateStore(int id, Store store)
         {
-            using (SqlConnection connection = new(_connectionString))
-            {
-                connection.Open();
+            using MySqlConnection connection = new MySqlConnection(_connectionString);
+            connection.Open();
 
-                SqlCommand command = connection.CreateCommand();
-                command.CommandType = CommandType.Text;
-                command.CommandText = "UPDATE Store SET storeName = @name WHERE Id = @id";
+            MySqlCommand command = connection.CreateCommand();
+            command.CommandType = CommandType.Text;
+            command.CommandText = "UPDATE Store SET storeName = @name WHERE Id = @id";
 
-                command.Parameters.AddWithValue("@id", id);
-                command.Parameters.AddWithValue("@name", store.Name);
+            command.Parameters.AddWithValue("@id", id);
+            command.Parameters.AddWithValue("@name", store.Name);
 
-                int rowsAffected = command.ExecuteNonQuery();
-                return rowsAffected > 0; // Return true if at least one row was updated
-            }
+            int rowsAffected = command.ExecuteNonQuery();
+            connection.Close();
+            return rowsAffected > 0; // Return true if at least one row was updated
         }
+
 
 
         public void GenerateRandomStores(int n)
