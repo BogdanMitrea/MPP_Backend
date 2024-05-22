@@ -7,7 +7,7 @@ namespace MPP_Backend.Repositories
     public class AuthRepository
     {
         private readonly string connectionString;
-        private static Dictionary<string, string> _tokenStorage=[];
+        private static Dictionary<string, string> _tokenStorage=new Dictionary<string, string>();
         String mypassword= "MpzwBuPsIHfhiudKFBpxeYrApLypiKMY";
         public AuthRepository()
         {

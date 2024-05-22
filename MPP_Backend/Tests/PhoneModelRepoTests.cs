@@ -168,7 +168,7 @@ namespace MPP_BackEnd.Tests
                 Memory = 64,
                 Photo = "test.jpg"
             };
-            var repository = new FakeRepository([]);
+            var repository = new FakeRepository(new List<PhoneModel>());
 
             // Act
             int addedPhoneId = repository.AddPhone(phoneModel);
@@ -191,7 +191,7 @@ namespace MPP_BackEnd.Tests
                 Memory = 64,
                 Photo = "test.jpg"
             };
-            var repository = new FakeRepository([]);
+            var repository = new FakeRepository(new List<PhoneModel>());
 
             // Act
             int addedPhoneId = repository.AddPhone(phoneModel);
@@ -207,7 +207,7 @@ namespace MPP_BackEnd.Tests
         {
             // Arrange
             int nonExistentId = 100;
-            var repository = new FakeRepository([]);
+            var repository = new FakeRepository(new List<PhoneModel>());
 
             // Act
             bool isDeleted = repository.DeletePhone(nonExistentId);
@@ -229,7 +229,7 @@ namespace MPP_BackEnd.Tests
                 Memory = 64,
                 Photo = "test.jpg"
             };
-            var repository = new FakeRepository([]);
+            var repository = new FakeRepository(new List<PhoneModel>());
 
             // Act
             int addedPhoneId = repository.AddPhone(phoneModel);
@@ -255,7 +255,7 @@ namespace MPP_BackEnd.Tests
                 Memory = 64,
                 Photo = "test.jpg"
             };
-            var repository = new FakeRepository([]);
+            var repository = new FakeRepository(new List<PhoneModel>());
 
             // Act
             int addedPhoneId = repository.AddPhone(phoneModel);
@@ -282,7 +282,7 @@ namespace MPP_BackEnd.Tests
                 Memory = 64,
                 Photo = "test.jpg"
             };
-            var repository = new FakeRepository([]);
+            var repository = new FakeRepository(new List<PhoneModel>());
             int addedPhoneId = repository.AddPhone(phoneModel);
             // Act
             bool isUpdated = repository.UpdatePhone(addedPhoneId, phoneModel);
@@ -307,7 +307,7 @@ namespace MPP_BackEnd.Tests
                 Memory = 64,
                 Photo = "test.jpg"
             };
-            var repository = new FakeRepository([]);
+            var repository = new FakeRepository(new List<PhoneModel>());
 
             // Act
             bool isUpdated = repository.UpdatePhone(nonExistentId, phoneModel);
